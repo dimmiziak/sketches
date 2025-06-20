@@ -1,37 +1,49 @@
 let thoughts = [];
 let spotlight;
-let spotlightRadius = 100;
+let spotlightRadius;
 
 function setup() {
-  createCanvas(800, 600);
-  for (let i = 0; i < 10; i++) {
+  let canvas = createCanvas(windowWidth, windowHeight * 0.75);
+  canvas.parent('sketch-holder');
+  spotlightRadius = min(width, height) / 8;
+
+  for (let i = 0; i < 15; i++) {
     thoughts.push(new Thought(random(width), random(height)));
   }
 }
 
 function draw() {
-  background(30);
-  
-  // Spotlight (прожектор)
+  background(20, 20, 30, 80);
+
   spotlight = createVector(mouseX, mouseY);
   noFill();
-  stroke(255, 255, 100);
+  stroke(255, 255, 150, 150);
   strokeWeight(2);
   ellipse(spotlight.x, spotlight.y, spotlightRadius * 2);
 
-  // Draw thoughts
   for (let t of thoughts) {
     t.update(spotlight, spotlightRadius);
     t.display();
   }
 }
 
+function mousePressed() {
+  thoughts.push(new Thought(mouseX, mouseY));
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight * 0.75);
+  spotlightRadius = min(width, height) / 8;
+}
+
 class Thought {
   constructor(x, y) {
     this.pos = createVector(x, y);
     this.active = false;
-    this.baseColor = color(100, 100, 255);
+    this.baseColor = color(80, 120, 255);
     this.activeColor = color(255, 200, 0);
+    this.size = random(20, 35);
+    this.noiseOffset = random(1000);
   }
 
   update(spotlight, radius) {
@@ -41,7 +53,13 @@ class Thought {
 
   display() {
     noStroke();
-    fill(this.active ? this.activeColor : this.baseColor);
-    ellipse(this.pos.x, this.pos.y, this.active ? 40 : 25);
+    let glow = this.active ? 40 : 20;
+    let pulse = sin(frameCount * 0.05 + this.noiseOffset) * 5;
+    let currentColor = this.active ? this.activeColor : this.baseColor;
+    fill(currentColor);
+    drawingContext.shadowBlur = glow;
+    drawingContext.shadowColor = currentColor;
+    ellipse(this.pos.x, this.pos.y, this.size + pulse);
+    drawingContext.shadowBlur = 0; // reset after drawing
   }
 }
