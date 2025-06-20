@@ -4,8 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Spotlight Thoughts</title>
-  <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at center, #1a1a2e, #0f0f1f);
+      font-family: 'Segoe UI', sans-serif;
+      color: #ffffffdd;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #title {
+      text-align: center;
+      padding: 20px;
+    }
+    #sketch-holder {
+      flex-grow: 1;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
 </head>
 <body>
   <main>
@@ -15,6 +39,85 @@
     </div>
     <div id="sketch-holder"></div>
   </main>
-  <script src="sketch.js"></script>
+
+  <script>
+    let thoughts = [];
+    let spotlight;
+    let spotlightRadius;
+
+    function setup() {
+      let canvas = createCanvas(windowWidth, windowHeight * 0.75);
+      canvas.parent('sketch-holder');
+      spotlightRadius = min(width, height) / 8;
+      
+      for (let i = 0; i < 15; i++) {
+        thoughts.push(new Thought(random(width), random(height)));
+      }
+    }
+
+    function draw() {
+      background(20, 20, 30, 80);
+      spotlight = createVector(mouseX, mouseY);
+      
+      // Draw spotlight circle
+      noFill();
+      stroke(255, 255, 150, 150);
+      strokeWeight(2);
+      ellipse(spotlight.x, spotlight.y, spotlightRadius * 2);
+      
+      // Update and display thoughts
+      for (let t of thoughts) {
+        t.update(spotlight, spotlightRadius);
+        t.display();
+      }
+    }
+
+    function mousePressed() {
+      thoughts.push(new Thought(mouseX, mouseY));
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight * 0.75);
+      spotlightRadius = min(width, height) / 8;
+    }
+
+    class Thought {
+      constructor(x, y) {
+        this.pos = createVector(x, y);
+        this.active = false;
+        this.baseColor = color(80, 120, 255);
+        this.activeColor = color(255, 200, 0);
+        this.size = random(20, 35);
+        this.noiseOffset = random(1000);
+      }
+
+      update(spotlight, radius) {
+        let d = dist(this.pos.x, this.pos.y, spotlight.x, spotlight.y);
+        this.active = d < radius;
+      }
+
+      display() {
+        noStroke();
+        let glow = this.active ? 40 : 20;
+        let pulse = sin(frameCount * 0.05 + this.noiseOffset) * 5;
+        let currentColor = this.active ? this.activeColor : this.baseColor;
+        
+        fill(currentColor);
+        
+        // Add glow effect
+        if (typeof drawingContext !== 'undefined') {
+          drawingContext.shadowBlur = glow;
+          drawingContext.shadowColor = currentColor.toString();
+        }
+        
+        ellipse(this.pos.x, this.pos.y, this.size + pulse);
+        
+        // Reset shadow
+        if (typeof drawingContext !== 'undefined') {
+          drawingContext.shadowBlur = 0;
+        }
+      }
+    }
+  </script>
 </body>
 </html>
